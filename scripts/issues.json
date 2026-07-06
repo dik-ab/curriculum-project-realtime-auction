@@ -28,26 +28,26 @@
   ],
   "milestones": [
     {
-      "title": "M1 出品と検索",
+      "title": "M1: 出品と検索",
       "description": "docker compose環境、認証(ドメイン制限)、出品CRUD・画像、カテゴリ・admin停止、一覧・検索・ソート"
     },
     {
-      "title": "M2 入札コア",
+      "title": "M2: 入札コア",
       "description": "入札API(条件付きUPDATE・競合テスト)、即決、マイページ、通知モデル、締切スケジューラ"
     },
     {
-      "title": "M3 リアルタイム",
+      "title": "M3: リアルタイム",
       "description": "WebSocket基盤(room・Cookie+JWT)、ブロードキャスト、outbid・閲覧人数、自動延長、再接続復元"
     },
     {
-      "title": "M4 取引と仕上げ",
+      "title": "M4: 取引と仕上げ",
       "description": "取引フロー、ウォッチリスト、代理入札、CI、READMEとデモ"
     }
   ],
   "issues": [
     {
       "title": "M1-01: 環境構築(docker compose + migration基盤)",
-      "milestone": "M1 出品と検索",
+      "milestone": "M1: 出品と検索",
       "labels": [
         "chore"
       ],
@@ -55,7 +55,7 @@
     },
     {
       "title": "M1-02: 認証(会社ドメイン制限のサインアップ + Cookie/JWTログイン)",
-      "milestone": "M1 出品と検索",
+      "milestone": "M1: 出品と検索",
       "labels": [
         "feature"
       ],
@@ -63,7 +63,7 @@
     },
     {
       "title": "M1-03: 出品CRUDと画像アップロード(ローカル保存)",
-      "milestone": "M1 出品と検索",
+      "milestone": "M1: 出品と検索",
       "labels": [
         "feature"
       ],
@@ -71,7 +71,7 @@
     },
     {
       "title": "M1-04: カテゴリ管理とadminによる出品停止",
-      "milestone": "M1 出品と検索",
+      "milestone": "M1: 出品と検索",
       "labels": [
         "feature"
       ],
@@ -79,7 +79,7 @@
     },
     {
       "title": "M1-05: 出品一覧・検索・ソート・ページネーション",
-      "milestone": "M1 出品と検索",
+      "milestone": "M1: 出品と検索",
       "labels": [
         "feature"
       ],
@@ -87,7 +87,7 @@
     },
     {
       "title": "M2-01: 入札API(条件付きUPDATE + 並列100入札の競合テスト)",
-      "milestone": "M2 入札コア",
+      "milestone": "M2: 入札コア",
       "labels": [
         "feature",
         "test"
@@ -96,7 +96,7 @@
     },
     {
       "title": "M2-02: 即決(buyout)",
-      "milestone": "M2 入札コア",
+      "milestone": "M2: 入札コア",
       "labels": [
         "feature"
       ],
@@ -104,7 +104,7 @@
     },
     {
       "title": "M2-03: 入札履歴とマイページ(勝ち負け表示)",
-      "milestone": "M2 入札コア",
+      "milestone": "M2: 入札コア",
       "labels": [
         "feature"
       ],
@@ -112,7 +112,7 @@
     },
     {
       "title": "M2-04: アプリ内通知モデル",
-      "milestone": "M2 入札コア",
+      "milestone": "M2: 入札コア",
       "labels": [
         "feature"
       ],
@@ -120,7 +120,7 @@
     },
     {
       "title": "M2-05: 締切スケジューラ(落札確定・流札・締切競合テスト)",
-      "milestone": "M2 入札コア",
+      "milestone": "M2: 入札コア",
       "labels": [
         "feature",
         "test"
@@ -129,7 +129,7 @@
     },
     {
       "title": "M3-01: WebSocket基盤(Cookie+JWT handshake、room設計)",
-      "milestone": "M3 リアルタイム",
+      "milestone": "M3: リアルタイム",
       "labels": [
         "feature"
       ],
@@ -137,7 +137,7 @@
     },
     {
       "title": "M3-02: price_updated / auction_ended のブロードキャスト",
-      "milestone": "M3 リアルタイム",
+      "milestone": "M3: リアルタイム",
       "labels": [
         "feature"
       ],
@@ -145,7 +145,7 @@
     },
     {
       "title": "M3-03: outbid即時通知と閲覧人数(viewer_count)",
-      "milestone": "M3 リアルタイム",
+      "milestone": "M3: リアルタイム",
       "labels": [
         "feature"
       ],
@@ -153,7 +153,7 @@
     },
     {
       "title": "M3-04: 自動延長(auction_extended)",
-      "milestone": "M3 リアルタイム",
+      "milestone": "M3: リアルタイム",
       "labels": [
         "feature"
       ],
@@ -161,7 +161,7 @@
     },
     {
       "title": "M3-05: 再接続時の状態復元(GET /api/listings/:id/state)",
-      "milestone": "M3 リアルタイム",
+      "milestone": "M3: リアルタイム",
       "labels": [
         "feature",
         "test"
@@ -170,7 +170,7 @@
     },
     {
       "title": "M4-01: 取引フロー(trades + 当事者コメント)",
-      "milestone": "M4 取引と仕上げ",
+      "milestone": "M4: 取引と仕上げ",
       "labels": [
         "feature"
       ],
@@ -178,7 +178,7 @@
     },
     {
       "title": "M4-02: ウォッチリストと高値更新通知",
-      "milestone": "M4 取引と仕上げ",
+      "milestone": "M4: 取引と仕上げ",
       "labels": [
         "feature"
       ],
@@ -186,7 +186,7 @@
     },
     {
       "title": "M4-03: 代理入札(上限額までの自動入札)",
-      "milestone": "M4 取引と仕上げ",
+      "milestone": "M4: 取引と仕上げ",
       "labels": [
         "feature"
       ],
@@ -194,7 +194,7 @@
     },
     {
       "title": "M4-04: CI(GitHub Actionsでテストとビルド)",
-      "milestone": "M4 取引と仕上げ",
+      "milestone": "M4: 取引と仕上げ",
       "labels": [
         "chore"
       ],
@@ -202,7 +202,7 @@
     },
     {
       "title": "M4-05: READMEとデモ仕上げ",
-      "milestone": "M4 取引と仕上げ",
+      "milestone": "M4: 取引と仕上げ",
       "labels": [
         "docs"
       ],
