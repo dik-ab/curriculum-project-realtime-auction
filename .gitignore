@@ -1,0 +1,25 @@
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# env
+.env
+.env.local
+
+# dependencies / build (使用スタックに応じて追記)
+node_modules/
+vendor/
+dist/
+build/
+__pycache__/
+*.pyc
+
+# uploaded images (ローカル保存の出品画像)
+uploads/
+
+# terraform (advanced課題用)
+.terraform/
+*.tfstate
+*.tfstate.backup

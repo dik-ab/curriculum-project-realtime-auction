@@ -1,0 +1,63 @@
+---
+name: issue-workflow
+description: issue着手からPR作成までの標準手順。issue読解、該当仕様の特定、実装計画のコメント化、実装、テスト、PR作成(Closes #N)まで。issueに着手するとき・「次のissueをやろう」と言われたときに使う。
+---
+
+# issueワークフロー
+
+1 issue = 1 branch = 1 PR の型です。順番を飛ばさないでください。
+
+## 1. issueを読解する
+
+- issue本文の「概要 / 仕様参照 / タスク / 受入条件 / ヒント」を読み、**受入条件を自分の言葉で言い直せる**状態にします。
+- マイルストーン順(M1→M4)・番号順に取ります。依存するissue(例: M3-02のブロードキャストはM2-01の入札APIとM3-01のroom基盤が前提)が未完了なら先にそちらへ。
+
+## 2. 該当仕様を特定する
+
+issueの「仕様参照」に加え、関連セクションを必ず開きます。
+
+| issueの種類 | 必ず確認する仕様 |
+|---|---|
+| API追加・変更 | `docs/api.md` のエンドポイント表・JSON例・エラーcode表(大文字スネークケース) |
+| テーブルを触る | `docs/database.md` の定義表・インデックス方針・ステータス遷移図・bidsの不変条件 |
+| 入札・締切・延長 | `docs/api.md` の「入札の有効条件」、`bidding-consistency` スキル(実装パターンはここが正) |
+| WebSocket | `docs/api.md` の「WebSocketイベント一覧」(イベント名・ペイロードを1文字も違えない)、`docs/screens.md` のS-03 |
+| 環境・compose | `docs/infra.md`(ポート・環境変数・1プロセス前提はここが正) |
+
+## 3. 実装計画をissueコメントに書く
+
+着手前に、次の形式で計画をissueにコメントします(AIが下書きし、受講者が確認して投稿)。
+
+```markdown
+## 実装計画
+- 方針: (1〜3文)
+- 触るファイル: (一覧)
+- テスト: (何をどう検証するか。入札・締切・延長が絡むissueでは同時実行ケースを必ず含める)
+- 仕様参照: docs/xxx.md「セクション名」
+```
+
+## 4. ブランチを切って実装する
+
+```bash
+git switch -c feature/<issue番号>-<slug>   # 例: feature/6-bid-api
+```
+
+- 仕様の値(ステータス値、エンドポイント名、エラーcode、WebSocketイベント名)をdocsからコピーして使い、記憶で打たないこと。
+- 入札・締切・延長を書くときは「この処理と同時に締切(または別の入札)が走ったら何が起きるか」を各ステップで自問します(`bidding-consistency` 参照)。
+- 時刻の判定はDBの `now()` に統一します。テストのためにクロックを注入可能にしておくと後で楽です。
+
+## 5. テストする
+
+- 受入条件を1つずつテストまたは手動確認(curl / 2ブラウザ)に対応づけます。対応しない受入条件が残っていたら未完了です。
+- `docker compose up` した実環境で最低1回は通しで確認します(WebSocketは2ブラウザ確認。docs/development-flow.md)。
+
+## 6. PRを作る
+
+- PR前に `spec-compliance` スキルでチェックを実行します。
+- `.github/PULL_REQUEST_TEMPLATE.md` に従い、本文に `Closes #<issue番号>`、動作確認のコマンドと出力を貼ります。
+
+```bash
+gh pr create --title "M2-01: 入札API(条件付きUPDATE + 競合テスト)" --body-file pr_body.md
+```
+
+- マージ後にissueが自動で閉じることを確認してから次のissueへ進みます。

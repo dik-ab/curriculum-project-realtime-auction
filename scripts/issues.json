@@ -1,0 +1,230 @@
+{
+  "labels": [
+    {
+      "name": "feature",
+      "color": "0e8a16",
+      "description": "機能実装"
+    },
+    {
+      "name": "chore",
+      "color": "6a737d",
+      "description": "環境構築・CI・雑務"
+    },
+    {
+      "name": "docs",
+      "color": "0075ca",
+      "description": "ドキュメント"
+    },
+    {
+      "name": "test",
+      "color": "fbca04",
+      "description": "テスト・検証が主目的"
+    },
+    {
+      "name": "advanced",
+      "color": "5319e7",
+      "description": "発展課題(任意)"
+    }
+  ],
+  "milestones": [
+    {
+      "title": "M1 出品と検索",
+      "description": "docker compose環境、認証(ドメイン制限)、出品CRUD・画像、カテゴリ・admin停止、一覧・検索・ソート"
+    },
+    {
+      "title": "M2 入札コア",
+      "description": "入札API(条件付きUPDATE・競合テスト)、即決、マイページ、通知モデル、締切スケジューラ"
+    },
+    {
+      "title": "M3 リアルタイム",
+      "description": "WebSocket基盤(room・Cookie+JWT)、ブロードキャスト、outbid・閲覧人数、自動延長、再接続復元"
+    },
+    {
+      "title": "M4 取引と仕上げ",
+      "description": "取引フロー、ウォッチリスト、代理入札、CI、READMEとデモ"
+    }
+  ],
+  "issues": [
+    {
+      "title": "M1-01: 環境構築(docker compose + migration基盤)",
+      "milestone": "M1 出品と検索",
+      "labels": [
+        "chore"
+      ],
+      "body": "## 概要\n\ndocker composeでPostgreSQLを起動し、選んだスタックのAPIプロジェクト骨格とmigrationの仕組みを用意します。必須サービスはPostgreSQLだけです(画像はローカル保存、メールキャッチャーは不要)。\n\n## 仕様参照\n\n- docs/infra.md の「ローカル開発構成」(composeスケルトン、ポート、環境変数)\n- docs/development-flow.md の「共通ルール」\n\n## タスク\n\n- [ ] docker-compose.yml を作成(db: PostgreSQL 16、api: 自作。webは任意)\n- [ ] 選んだフレームワークでAPIプロジェクトを初期化し、ヘルスチェック用の `GET /healthz` を実装\n- [ ] migrationツールを導入し、空のmigrationが実行できることを確認\n- [ ] 画像保存用の `UPLOAD_DIR`(uploads volume)と `/uploads/*` の静的配信の枠を用意\n- [ ] READMEに起動手順(`docker compose up`)と使用スタックを追記\n\n## 受入条件\n\n- [ ] `docker compose up` でdbとapiが起動する(apiはホスト直起動でも可。その場合は手順をREADMEに明記)\n- [ ] `curl http://localhost:3000/healthz` が200を返す\n- [ ] migrationコマンドがREADMEに書いた手順どおりに実行できる\n- [ ] `.gitignore` に `uploads/` が入っており、画像ファイルがコミットされない\n\n## ヒント\n\n- apiは最初ホスト側で直接起動し、動いてからDockerfile化すると切り分けが楽です。DBとAPIのタイムゾーンはUTCに統一しておくと締切テストで悩みません。\n- AIへの依頼例: 「docs/infra.md のcomposeスケルトンをベースに、(選んだスタック)用のdocker-compose.ymlとDockerfile、healthzエンドポイントを作って」\n"
+    },
+    {
+      "title": "M1-02: 認証(会社ドメイン制限のサインアップ + Cookie/JWTログイン)",
+      "milestone": "M1 出品と検索",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\nusers テーブルと認証一式を実装します。SNSカリキュラムと同方式のCookie + JWTですが、サインアップは会社ドメイン(@lumina.example)のメールのみ許可する点が特徴です。メール確認は行いません。\n\n## 仕様参照\n\n- docs/requirements.md の「1. 認証(会社ドメイン制限)」\n- docs/database.md の users 定義表(role: member/admin)\n- docs/api.md の「認証」エンドポイント表とエラーcode表(DOMAIN_NOT_ALLOWED / EMAIL_TAKEN / UNAUTHORIZED)\n\n## タスク\n\n- [ ] users のmigration(email UNIQUE、password_hash、role)\n- [ ] POST /api/auth/signup: ドメイン検証(環境変数 ALLOWED_EMAIL_DOMAIN)、パスワードハッシュ(bcrypt等)\n- [ ] POST /api/auth/login(HttpOnly CookieにJWT)、POST /api/auth/logout、GET /api/auth/me\n- [ ] 認証middleware(signup/login以外は全API必須)とadmin判定\n- [ ] エラーレスポンスを {\"message\",\"code\"} に統一する共通ハンドラ(codeは大文字スネークケース)\n- [ ] adminユーザーを作るseed(またはコマンド)\n\n## 受入条件\n\n- [ ] `tanaka@lumina.example` でサインアップでき、`tanaka@gmail.com` は400(code: DOMAIN_NOT_ALLOWED)になるテストがある\n- [ ] メール重複は409(code: EMAIL_TAKEN)\n- [ ] ログイン後のCookieで /api/auth/me が通り、未認証は401(code: UNAUTHORIZED)\n- [ ] DBにパスワード平文が保存されていない\n\n## ヒント\n\n- ドメイン判定は「@で分割した最後の要素の完全一致」にします。`evil-lumina.example` や `lumina.example.evil.com` が通る部分一致は脆弱です。\n- AIへの依頼例: 「docs/api.md の認証セクションに従い、Cookie+JWTの認証middlewareと、ドメイン制限の境界ケース(サブドメイン偽装)を含むテストを書いて」\n"
+    },
+    {
+      "title": "M1-03: 出品CRUDと画像アップロード(ローカル保存)",
+      "milestone": "M1 出品と検索",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\nlistings / listing_images テーブルと、出品の作成・下書き・公開・編集・取消、画像アップロード(最大4枚、ローカル保存)を実装します。「入札が付いたら編集・取消不可」のルールはM2で効き始めますが、判定の枠組みはここで作ります。\n\n## 仕様参照\n\n- docs/requirements.md の「2. 出品」「3. 出品の編集・取消と管理者停止」\n- docs/database.md の listings / listing_images 定義表、CHECK制約、listings.status遷移図\n- docs/api.md の「出品」エンドポイント表\n\n## タスク\n\n- [ ] listings / listing_images のmigration(CHECK制約、UNIQUE(listing_id, position)、current_priceの初期値=start_price、statusは全6値を想定)\n- [ ] POST /api/listings(publish: trueで即公開)、GET /api/listings/:id、PATCH /api/listings/:id\n- [ ] POST /api/listings/:id/publish(draft→active。ends_atが公開時点から24h〜7日の範囲外は400)\n- [ ] POST /api/listings/:id/cancel(入札0件のみ。bids_count>0は409)\n- [ ] POST /api/listings/:id/images(multipart。JPEG/PNG/WebP、5MB、最大4枚)、DELETE /api/listings/:id/images/:imageId\n- [ ] 金額バリデーション(start_price>=100、bid_increment>=10、buyout_price>=start_price+bid_increment)\n\n## 受入条件\n\n- [ ] 下書き→公開→詳細取得の一連がcurlで通る\n- [ ] 他人の出品のPATCH/cancelが403(code: FORBIDDEN)になるテストがある\n- [ ] 5枚目の画像アップロード、6MBのファイル、GIFがいずれも400(code: VALIDATION_ERROR)\n- [ ] ends_atが23時間後・8日後の公開がどちらも400\n- [ ] アップロードした画像がURLで取得できる\n\n## ヒント\n\n- 拡張子ではなくファイル先頭のマジックバイト(またはライブラリのMIME判定)で形式を検証すると堅牢です。保存ファイル名はUUID等で採番し、元のファイル名を使わないこと(パストラバーサル対策)。\n- AIへの依頼例: 「multipartで画像を受け取り、MIME検証・5MB制限・4枚上限をチェックしてUPLOAD_DIRに保存する処理と、その異常系テストを書いて」\n"
+    },
+    {
+      "title": "M1-04: カテゴリ管理とadminによる出品停止",
+      "milestone": "M1 出品と検索",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\ncategories テーブルとadmin用のカテゴリCRUD、そして不適切な出品をadminが停止・解除するAPIを実装します。\n\n## 仕様参照\n\n- docs/requirements.md の「3. 出品の編集・取消と管理者停止」\n- docs/database.md の categories 定義表と listings.status遷移図(active⇄suspendedの遷移、suspended中の締切超過の扱い)\n- docs/api.md の「カテゴリ」エンドポイント表と「出品」のsuspend/unsuspend\n\n## タスク\n\n- [ ] categories のmigration(name UNIQUE、sort_order)とseed(数カテゴリ)\n- [ ] GET /api/categories、POST/PATCH/DELETE /api/admin/categories(memberは403)\n- [ ] 出品から参照中のカテゴリDELETEは409(code: CONFLICT)\n- [ ] POST /api/admin/listings/:id/suspend(active→suspended、reason記録)、POST /api/admin/listings/:id/unsuspend\n- [ ] unsuspend時にends_atが過ぎていたら、activeに戻さず終了処理(入札ありならsold、なしならended)を行う\n\n## 受入条件\n\n- [ ] admin以外の /api/admin/* 呼び出しが403になるテストがある\n- [ ] suspend中の出品が一覧の既定表示(status=active)から消える\n- [ ] カテゴリ名重複が409、使用中カテゴリの削除が409\n- [ ] ends_at超過後のunsuspendで出品がsold/endedに確定するテストがある\n\n## ヒント\n\n- suspended中の出品はスケジューラ(M2-05)の対象外です。unsuspend時の締切超過処理を忘れると「終わらないオークション」が生まれます。docs/database.md の遷移図の注記を読んでから書きましょう。\n- AIへの依頼例: 「docs/database.md のlistings遷移図をホワイトリストとして持つ遷移関数(不正遷移は例外)と、suspend/unsuspendのテストを書いて」\n"
+    },
+    {
+      "title": "M1-05: 出品一覧・検索・ソート・ページネーション",
+      "milestone": "M1 出品と検索",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\nGET /api/listings に、キーワード・カテゴリ・ステータスの絞り込み、3種類のソート(新着/終了間近/人気)、ページネーションを実装します。あわせて一覧・詳細のフロント(S-02 / S-03の静的部分)を作ります。\n\n## 仕様参照\n\n- docs/requirements.md の「4. 一覧・検索」\n- docs/api.md の「出品」GET /api/listings のパラメータ仕様\n- docs/screens.md の S-02(出品一覧)、docs/database.md のインデックス方針\n\n## タスク\n\n- [ ] keyword(タイトル・説明のILIKE部分一致)、category_id、status(既定active)の絞り込み\n- [ ] sort=newest(created_at降順)/ ending_soon(ends_at昇順)/ popular(bids_count降順)\n- [ ] page / per_page(既定20、最大100。超過指定は100に丸めるか400にするか決めてPRに明記)\n- [ ] レスポンスに件数情報(total等)とサムネイル(position=1の画像)を含める\n- [ ] 一覧画面(検索フォーム、カード表示: 現在価格・入札数・残り時間)と詳細画面の静的表示\n\n## 受入条件\n\n- [ ] 絞り込み・ソートの組み合わせが機能するテストがある(少なくとも keyword+category、ending_soon、popular)\n- [ ] draft / suspended の出品が既定の一覧に現れない\n- [ ] N+1クエリになっていない(画像・カテゴリの取得が一覧1回あたり定数回)\n- [ ] 2ページ目の取得が正しい(重複・抜けがない)\n\n## ヒント\n\n- ending_soonは status=active のみで意味を持つソートです。ILIKE検索は遅くても構いません(ADV-01でpg_trgm化する伏線です)。\n- AIへの依頼例: 「検索条件を組み立てるクエリビルダ部分を関数に切り出して、条件の組み合わせをテーブル駆動でテストして」\n"
+    },
+    {
+      "title": "M2-01: 入札API(条件付きUPDATE + 並列100入札の競合テスト)",
+      "milestone": "M2 入札コア",
+      "labels": [
+        "feature",
+        "test"
+      ],
+      "body": "## 概要\n\n本プロジェクトの核心のissueです。POST /api/listings/:id/bids を条件付きUPDATE 1文で実装し、「現在価格+入札単位以上のみ有効、同時入札は高い方が勝ち、同額は先着」を並列100入札の競合テストで証明します。\n\n## 仕様参照\n\n- docs/requirements.md の「5. 入札」と非機能要件「同時入札の整合性」\n- docs/api.md の「POST /api/listings/:id/bids」(有効条件5項目とエラーcode、BID_TOO_LOWのminimum_amount)\n- docs/database.md の bids 定義表と「bids.status の意味論」\n- .claude/skills/bidding-consistency/SKILL.md の「3. 入札の実装パターン」「6. 並列100入札テストの書き方」(手順どおりに)\n\n## タスク\n\n- [ ] bids のmigration(INDEX(listing_id, amount DESC)、INDEX(bidder_id, created_at))\n- [ ] 条件付きUPDATE 1文(status/締切/出品者/現勝者/金額の5条件をWHERE句に。自動延長のCASE式は骨格だけ入れてM3-04で有効化してもよい)\n- [ ] 同一トランザクションで旧winning→outbid、新規bids INSERT(winning)\n- [ ] 0行更新時のエラーcode判定(AUCTION_NOT_ACTIVE / AUCTION_ENDED / SELF_BID_FORBIDDEN / ALREADY_WINNING / BID_TOO_LOW+minimum_amount)\n- [ ] 並列100入札テスト(全員同額パターンと金額ばらばらパターン)\n\n## 受入条件\n\n- [ ] 有効条件5項目それぞれに、対応するcodeを返すテストがある\n- [ ] 並列100入札後に不変条件(current_price=最高額、winningは1件、bids_count=行数、単調増加)がすべて成立する\n- [ ] 全員同額パターンで成功がちょうど1件、残り99件がBID_TOO_LOW\n- [ ] 事前SELECTで有効性を判定するコードが存在しない(判定はUPDATEのWHERE句のみ)\n\n## ヒント\n\n- 「読んでから書く」を1行でも書いたら負けです。エラーcode判定用のSELECTはUPDATEが0行だった後にのみ行います(判定には使わない)。\n- AIへの依頼例: 「.claude/skills/bidding-consistency の3節のUPDATE文をベースに(スタック)で入札処理を書いて。6節の手順どおり並列100入札テストも書いて」\n"
+    },
+    {
+      "title": "M2-02: 即決(buyout)",
+      "milestone": "M2 入札コア",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\n即決価格以上の入札で即座に落札(sold)にする処理を実装します。落札後処理(bidsの確定、取引作成、通知)はM2-05・M4-01で完成するため、このissueでは骨格(フック)まで作り、soldへの遷移とbids確定を確実にします。\n\n## 仕様参照\n\n- docs/requirements.md の「6. 即決」\n- docs/api.md の「POST /api/listings/:id/bids」(buyoutの扱い: current_price=buyout_price、bidsのamount=buyout_price、レスポンスのbuyout: true)\n- .claude/skills/bidding-consistency/SKILL.md の「3. 入札の実装パターン」(即決の段落)\n\n## タスク\n\n- [ ] amount >= buyout_price の判定を入札処理に組み込む(status='sold' まで含めた条件付きUPDATE)\n- [ ] bidsには amount=buyout_price で記録(超過分は受け取らない)\n- [ ] 即決成立時のbids確定(winning→won、outbid→lost)\n- [ ] 落札後処理の共通関数(finalize)を切り出し、M2-05のスケジューラと共用できる形にする\n- [ ] レスポンスに buyout: true と listing.status=sold を含める\n\n## 受入条件\n\n- [ ] buyout_price=10000の出品に12000で入札すると、current_price=10000・bidsのamount=10000・status=soldになるテストがある\n- [ ] 即決とほぼ同時の通常入札が、どちらか一方だけ成立する(並列テストまたは直列で状態を作ったテスト)\n- [ ] 即決後の追加入札がAUCTION_NOT_ACTIVEで拒否される\n- [ ] buyout_price未設定の出品では高額入札しても通常入札として扱われる\n\n## ヒント\n\n- 「即決用の別エンドポイント」は作りません。同じPOST /bidsの中で金額により分岐します。UPDATE文を2種類(通常/即決)用意し、即決判定を先に試すのが素直です。\n- AIへの依頼例: 「即決と通常入札で条件付きUPDATEを分岐する実装と、即決×通常入札の同時実行テストを書いて」\n"
+    },
+    {
+      "title": "M2-03: 入札履歴とマイページ(勝ち負け表示)",
+      "milestone": "M2 入札コア",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\n入札履歴API(GET /api/listings/:id/bids)と、マイページの「自分の出品一覧」「入札中一覧(勝ち負け表示)」を実装します。\n\n## 仕様参照\n\n- docs/requirements.md の「11. マイページ」\n- docs/api.md の「入札・状態復元」「マイページ」エンドポイント表\n- docs/database.md の「bids.status の意味論」、docs/screens.md の S-05\n\n## タスク\n\n- [ ] GET /api/listings/:id/bids(新しい順、ページネーション、bidder_name含む)\n- [ ] GET /api/me/listings(statusで絞り込み: 出品中/履歴)\n- [ ] GET /api/me/bids(入札した出品ごとに、自分の最高入札額と立場 winning/outbid/won/lost を返す)\n- [ ] マイページUI(タブ: 出品中/出品履歴/入札中。勝ち負けバッジ)\n\n## 受入条件\n\n- [ ] 入札履歴が新しい順で返り、各行にbidder_name・amount・status・created_atが含まれる\n- [ ] /api/me/bids で、抜かれた出品がoutbid、勝っている出品がwinningとして返るテストがある\n- [ ] 同じ出品に複数回入札しても /api/me/bids では1行(最新の立場)にまとまる\n- [ ] 他人のマイページ情報が見えない(認証ユーザー自身のデータのみ)\n\n## ヒント\n\n- 「出品ごとの自分の最高入札」はウィンドウ関数(ROW_NUMBER)かDISTINCT ONで1クエリにできます。N+1で書かないこと。\n- AIへの依頼例: 「bidsから“ユーザーの出品ごと最新の立場”を1クエリで取るSQL(DISTINCT ON使用)と、そのテストデータ・テストを書いて」\n"
+    },
+    {
+      "title": "M2-04: アプリ内通知モデル",
+      "milestone": "M2 入札コア",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\nnotifications テーブルと通知API(一覧・既読)を実装し、まず outbid 通知(最高入札者が入れ替わったとき)を入札処理に組み込みます。落札系の通知はM2-05、ウォッチ・取引系はM4で追加します。\n\n## 仕様参照\n\n- docs/database.md の notifications 定義表と「通知typeの発生タイミング」表\n- docs/api.md の「通知」エンドポイント表\n\n## タスク\n\n- [ ] notifications のmigration(INDEX(user_id, read_at, created_at))\n- [ ] 通知作成の共通関数(type・payloadを受け取る。typeはdocs/database.mdの6種のホワイトリスト)\n- [ ] 入札成立時に、抜かれた入札者へ type=outbid の通知を作成(payload: listing_id、title、current_price)\n- [ ] GET /api/notifications(unread=true対応、unread_count含む)、PATCH /api/notifications/:id/read、POST /api/notifications/read-all\n- [ ] 通知一覧UI(未読バッジ)\n\n## 受入条件\n\n- [ ] AがBに抜かれるとBではなくAにoutbid通知が作られるテストがある(自分の入札で自分に通知が来ない)\n- [ ] 未読件数が正しく、既読化・全既読化が機能する\n- [ ] 他人の通知の既読化が404または403になる\n- [ ] 定義外のtypeで通知を作ろうとするとエラーになる(ホワイトリスト)\n\n## ヒント\n\n- 通知作成は入札のトランザクションに含めます(入札がロールバックしたのに通知だけ残る、を防ぐ)。M3-03のWebSocket即時通知はこの通知作成のすぐ後に載ります。\n- AIへの依頼例: 「docs/database.md の通知type表をenumとして持つ通知作成関数と、outbid通知が正しい宛先に作られるテストを書いて」\n"
+    },
+    {
+      "title": "M2-05: 締切スケジューラ(落札確定・流札・締切競合テスト)",
+      "milestone": "M2 入札コア",
+      "labels": [
+        "feature",
+        "test"
+      ],
+      "body": "## 概要\n\nends_atを過ぎたactiveな出品を終了処理するスケジューラを実装します。入札ありはsold(bids確定・通知)、なしはended(流札)です。「締切後の入札が勝つことはない」を締切競合テストで証明します。\n\n## 仕様参照\n\n- docs/requirements.md の「9. 締切と落札」と非機能要件「締切の正確さ」\n- docs/database.md の listings.status遷移図、trades.listing_id UNIQUE、INDEX(status, ends_at)\n- .claude/skills/bidding-consistency/SKILL.md の「4. 締切とラスト入札の競合」(手順どおりに)\n\n## タスク\n\n- [ ] スケジューラ(10秒間隔推奨。apiプロセス内のタイマーで可)が status='active' AND ends_at<=now() を検出\n- [ ] 終了処理: 条件付きUPDATE(WHERE句でends_atを再評価)→ 1行返したときだけ後処理\n- [ ] 後処理: bids確定(winning→won、outbid→lost)、trades作成(initiated。M4-01で本格利用)、通知(auction_won / listing_sold / listing_unsold)\n- [ ] 締切競合テスト: 締切とほぼ同時の入札で「成立して延長」か「AUCTION_ENDED拒否」のどちらかしか起きないこと\n- [ ] スケジューラ二重起動テスト(または多重実行しても後処理が1回になる確認)\n\n## 受入条件\n\n- [ ] ends_atを過ぎた出品が10秒程度でsold/endedになり、通知が作られる\n- [ ] ends_at以降のcreated_atを持つbids行が存在しないことをassertするテストがある\n- [ ] 終了処理を同じ出品に2回実行してもtradesは1件・通知は1セット(条件付きUPDATEの空振り+UNIQUE制約)\n- [ ] 流札(入札0件)がendedになり、listing_unsold通知が出品者に届く\n\n## ヒント\n\n- 時刻はクロック注入(テストでnowを差し替え)にすると、締切競合テストが決定的に書けます。実時間で待つテストは最小限に。\n- AIへの依頼例: 「.claude/skills/bidding-consistency の4節のUPDATE文で終了処理を書いて。締切直前の入札と終了処理を並行実行するテストも書いて」\n"
+    },
+    {
+      "title": "M3-01: WebSocket基盤(Cookie+JWT handshake、room設計)",
+      "milestone": "M3 リアルタイム",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\nWebSocketエンドポイント(/ws)を実装します。handshake時にCookieのJWTを検証し(SNSカリキュラムのDMと同方式)、出品ごとのroom(listing:<id>)へのjoin/leaveと、ユーザーID→接続の対応表(user registry)を作ります。配信内容はM3-02以降で載せます。\n\n## 仕様参照\n\n- docs/api.md の「認証 > WebSocket」と「WebSocketイベント一覧」(join / leave、エラーフレーム、運用ルール)\n- docs/infra.md の「ローカル開発構成」(1プロセス前提)\n- .claude/skills/bidding-consistency/SKILL.md の「7. WebSocketイベント設計」\n\n## タスク\n\n- [ ] GET /ws のUpgrade処理と、handshake時のCookie JWT検証(未認証は拒否。方式をPRに明記)\n- [ ] room管理(listing:<id> → 接続集合)とuser registry(user_id → 接続集合)をプロセス内メモリで実装\n- [ ] {\"event\":\"join\",\"data\":{\"listing_id\":12}} / leave の処理(存在しない・draftの出品はエラーフレームまたは無視)\n- [ ] 切断時のクリーンアップ(全roomからの自動離脱、registryからの削除)\n- [ ] ping/pong(30秒間隔程度)で死んだ接続を掃除\n\n## 受入条件\n\n- [ ] Cookieなし・不正JWTのWebSocket接続が拒否されるテストがある\n- [ ] join後にroomの接続集合に入り、leave・切断で確実に抜ける(切断後のroomにゴミが残らない)テストがある\n- [ ] 同一ユーザーの複数接続(2タブ)がuser registryで両方管理される\n- [ ] websocat等でjoin→(M3-02以降のイベントを受信する枠が)動くことを手動確認しPRに記録\n\n## ヒント\n\n- SNSカリキュラムのDMで書いたhandshake検証コードが最短の参考実装です。room/registryはMap+Setで十分で、ライブラリのroom機能(Socket.IO等)を使う場合もイベント名はdocs/api.mdに合わせます。\n- AIへの依頼例: 「(WebSocketライブラリ)でCookieのJWTをhandshake検証し、Map+Setでroomとuser registryを管理する接続マネージャと、切断クリーンアップのテストを書いて」\n"
+    },
+    {
+      "title": "M3-02: price_updated / auction_ended のブロードキャスト",
+      "milestone": "M3 リアルタイム",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\n入札成立時に price_updated を、締切・即決の確定時に auction_ended をroomへ配信します。出品詳細(S-03)がリロードなしで動き始めるissueです。\n\n## 仕様参照\n\n- docs/api.md の「WebSocketイベント一覧」(price_updated / auction_ended のペイロードを1文字も違えない)\n- docs/screens.md の「S-03 出品詳細のリアルタイム要素」\n- .claude/skills/bidding-consistency/SKILL.md の「7. WebSocketイベント設計」(配信はコミット後)\n\n## タスク\n\n- [ ] 入札処理のコミット後に price_updated をroom(listing:<id>)へ配信(current_price、bids_count、version、bid: {id, bidder_name, amount, created_at})\n- [ ] M2-05の終了処理とM2-02の即決に auction_ended 配信を追加(result: sold/unsold、final_price、winner、trade_id、version)\n- [ ] 出品詳細UI: price_updatedで現在価格・入札数・履歴先頭を更新、auction_endedで入札フォームを無効化し結果表示\n- [ ] 自分の入札のPOSTレスポンスとprice_updatedの二重適用をversion(またはbid id)比較で防ぐ\n\n## 受入条件\n\n- [ ] ブラウザ2つで同じ出品を開き、片方の入札がもう片方にリロードなしで反映される(確認手順・スクリーンショットをPRに記載)\n- [ ] 配信がDBコミットの後に行われている(トランザクション内で配信していない)ことをコードで確認できる\n- [ ] roomにjoinしていない接続(別の出品を見ている人)には届かないテストがある\n- [ ] auction_endedの流札パターン(result: unsold、winner: null)が正しく配信される\n\n## ヒント\n\n- 配信はfire-and-forgetにし、失敗しても入札処理を巻き戻さないこと(正はDBで、再接続復元が受け皿。M3-05)。\n- AIへの依頼例: 「入札サービスの戻り値からdocs/api.md仕様どおりのprice_updatedペイロードを組み立てる関数と、ペイロードのスナップショットテストを書いて」\n"
+    },
+    {
+      "title": "M3-03: outbid即時通知と閲覧人数(viewer_count)",
+      "milestone": "M3 リアルタイム",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\n最高入札者が入れ替わったとき、抜かれた本人へ outbid イベントを即時送信します(roomではなくuser registry経由)。あわせてroomの接続数を viewer_count として配信します。\n\n## 仕様参照\n\n- docs/api.md の「WebSocketイベント一覧」(outbid / viewer_count のペイロードと「outbidはroom配信ではない」の運用ルール)\n- docs/requirements.md の「7. リアルタイム配信(WebSocket)」\n- docs/screens.md の S-03(入札負けアラート、閲覧人数)\n\n## タスク\n\n- [ ] 入札成立時、M2-04のoutbid通知作成に加えて、抜かれたユーザーの全接続へ outbid イベントを送信(listing_id、title、your_amount、current_price、minimum_amount)\n- [ ] join/leave/切断のたびに、roomの接続数を viewer_count としてroom全員に配信\n- [ ] UI: outbidでトースト表示+「最高入札者」バッジを外す、viewer_countで閲覧人数を更新\n- [ ] 抜かれた本人が別ページ(または未接続)でもnotificationsに残ることを確認(WebSocketは速報、通知が受け皿)\n\n## 受入条件\n\n- [ ] ブラウザ2つ(A=入札中、B=対抗)で、Bの入札の瞬間にAにoutbidトーストが出る(確認手順をPRに記載)\n- [ ] outbidがroom全員ではなく本人にだけ届くテストがある(第三者の接続が受信しない)\n- [ ] 2タブで開いている本人の両方のタブにoutbidが届く\n- [ ] join/leaveで全員のviewer_countが増減し、切断(タブを閉じる)でも減る\n\n## ヒント\n\n- viewer_countは接続数ベースで十分です(同一ユーザーの2タブは2とカウントしてよい。docs/requirements.md 用語集)。\n- AIへの依頼例: 「user registryから指定ユーザーの全接続にイベントを送るsendToUser関数と、“本人のみに届く”ことを検証する3接続のテストを書いて」\n"
+    },
+    {
+      "title": "M3-04: 自動延長(auction_extended)",
+      "milestone": "M3 リアルタイム",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\nスナイプ対策の自動延長を有効化します。終了3分前以降の入札成立で ends_at を3分延長(累計10回・30分上限)し、auction_extended をroomへ配信します。延長は入札の条件付きUPDATEと同一文内で行います。\n\n## 仕様参照\n\n- docs/requirements.md の「8. 自動延長(スナイプ対策)」\n- docs/api.md の「WebSocketイベント一覧」(auction_extended)と「入札の有効条件」の自動延長の段落\n- .claude/skills/bidding-consistency/SKILL.md の「5. 自動延長の実装」(境界4ケースのテスト)\n\n## タスク\n\n- [ ] M2-01のUPDATE文のCASE式(ends_at延長 + extended_count加算)を有効化\n- [ ] RETURNINGのextended_count前後比較で延長を検知し、auction_extended(ends_at、extended_count、version)をroomへ配信\n- [ ] UI: auction_extendedでカウントダウンの基準を差し替え、「延長されました」を表示\n- [ ] 境界テスト: 残り3分1秒(延長なし)/ 3分ちょうど(延長)/ 2分59秒(延長)/ extended_count=10(延長なし・入札は成立)\n\n## 受入条件\n\n- [ ] 境界4ケースのテストが時刻注入で書かれている(実時間で3分待つテストがない)\n- [ ] 延長は現在のends_at+3分であり、now()+3分ではないことをテストで確認している\n- [ ] 11回目の延長が起きない(extended_count上限)\n- [ ] ブラウザ2つで、片方の入札でもう片方のカウントダウンが3分延びる(確認手順をPRに記載)\n\n## ヒント\n\n- 延長と締切の競合(延長された出品を締切処理が終了させない)はM2-05のWHERE句再評価で既に守られています。テストで再確認だけしましょう。\n- AIへの依頼例: 「.claude/skills/bidding-consistency の5節の境界4ケースを、クロック注入を使ったテーブル駆動テストにして」\n"
+    },
+    {
+      "title": "M3-05: 再接続時の状態復元(GET /api/listings/:id/state)",
+      "milestone": "M3 リアルタイム",
+      "labels": [
+        "feature",
+        "test"
+      ],
+      "body": "## 概要\n\nWebSocketの切断→再接続で表示を最新化する状態復元API(GET /api/listings/:id/state)と、クライアント側の再接続処理を実装します。「イベントは失われる前提、正はstate API」という設計の総仕上げです。\n\n## 仕様参照\n\n- docs/api.md の「GET /api/listings/:id/state」(レスポンス例、my_bid_status、latest_bids)と「WebSocketイベント一覧」の運用ルール(到達は保証しない)\n- docs/requirements.md の非機能要件「再接続の復元」\n- docs/screens.md の S-03 実装ルール(再接続時はstateで追いつく)\n\n## タスク\n\n- [ ] GET /api/listings/:id/state(status、current_price、bids_count、ends_at、extended_count、version、viewer_count、my_bid_status、latest_bids最大20件)\n- [ ] クライアント: 切断検知→指数バックオフで再接続→state取得→表示差し替え→join し直し\n- [ ] versionを使い、state取得後に届いた古いイベント(version小)を適用しない\n- [ ] 再接続テスト: 切断中に入札・延長を進めてから再接続し、表示が最新化されること\n\n## 受入条件\n\n- [ ] stateレスポンスがdocs/api.mdの例と同じキー構成で、my_bid_statusが自分の立場(winning/outbid/won/lost/null)を正しく返すテストがある\n- [ ] 切断中に current_price と ends_at が変わったケースで、再接続後の表示が最新値になる(自動テストまたは手動確認手順をPRに記載)\n- [ ] 切断中にオークションが終了したケースで、再接続後に終了表示になる\n- [ ] サーバー再起動(room情報消失)後もクライアントが自力で復帰する\n\n## ヒント\n\n- 「切断」はdocker compose restart api、またはDevToolsのネットワーク切断で再現できます。イベントの再送キューを作りたくなったら設計が逆走しています(正はstate)。\n- AIへの依頼例: 「WebSocketクライアントの再接続ラッパー(指数バックオフ、再接続時にonReconnectフックでstate取得)を書いて。バックオフのテストはタイマーをモックして」\n"
+    },
+    {
+      "title": "M4-01: 取引フロー(trades + 当事者コメント)",
+      "milestone": "M4 取引と仕上げ",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\n落札後の取引(initiated → handover → completed)と、当事者間のコメント欄を実装します。tradesの作成自体はM2-05(締切)とM2-02(即決)で済んでいるので、ここでは閲覧・遷移・コメントを作ります。\n\n## 仕様参照\n\n- docs/requirements.md の「10. 取引フロー」とユースケースUC-3\n- docs/database.md の trades / trade_comments 定義表と trades.status遷移図\n- docs/api.md の「取引」エンドポイント表\n\n## タスク\n\n- [ ] trade_comments のmigration\n- [ ] GET /api/trades/:id(当事者のみ。第三者は403)、GET /api/me/trades\n- [ ] PATCH /api/trades/:id: initiated→handover(当事者どちらでも)、handover→completed(落札者のみ、completed_at記録)。不正遷移は409\n- [ ] GET/POST /api/trades/:id/comments(投稿時に相手方へ type=trade_comment 通知)\n- [ ] 取引画面UI(S-06: ステータス表示・遷移ボタン・コメント欄)\n\n## 受入条件\n\n- [ ] 第三者(当事者以外)の取引閲覧・遷移・コメントがすべて403になるテストがある\n- [ ] 出品者がcompletedに進めようとすると403、落札者なら成功する\n- [ ] completed→handoverなどの逆遷移が409(遷移は現在statusを条件に含むUPDATE)\n- [ ] コメント投稿で相手方にtrade_comment通知が作られる(自分には作られない)\n\n## ヒント\n\n- 遷移の権限(誰がどこへ進められるか)は表で持つとテストしやすいです: (from, to, 許可ロール)の3列。\n- AIへの依頼例: 「trades遷移の(from, to, actor)テーブルを定義して、全組み合わせのテーブル駆動テストを書いて」\n"
+    },
+    {
+      "title": "M4-02: ウォッチリストと高値更新通知",
+      "milestone": "M4 取引と仕上げ",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\n出品のウォッチ(お気に入り)と、ウォッチ中の出品の現在価格が更新されたときの watch_price_updated 通知を実装します。\n\n## 仕様参照\n\n- docs/requirements.md の「機能要件(Should)」ウォッチリスト\n- docs/database.md の watches 定義表(複合PK)と通知type表(watch_price_updated: 入札した本人には送らない)\n- docs/api.md の「ウォッチリスト」エンドポイント表\n\n## タスク\n\n- [ ] watches のmigration(PRIMARY KEY(user_id, listing_id))\n- [ ] PUT /api/listings/:id/watch(冪等: 二重追加でも204)、DELETE(冪等)、GET /api/me/watches\n- [ ] 入札成立時、ウォッチしている全ユーザー(入札者本人を除く)に watch_price_updated 通知を作成\n- [ ] 出品詳細・一覧にウォッチボタン、マイページにウォッチ一覧タブ\n\n## 受入条件\n\n- [ ] PUTを2回叩いてもwatchesは1行で、2回目も204になるテストがある\n- [ ] ウォッチ中の出品に他人が入札すると通知が作られ、自分が入札したときは作られない\n- [ ] ウォッチ解除後は通知が来ない\n- [ ] ウォッチ数が多い出品への入札で通知作成がN+1になっていない(バルクINSERT)\n\n## ヒント\n\n- 通知のバルクINSERTは「watchesをSELECTして1件ずつINSERT」ではなく INSERT ... SELECT で1文にできます。\n- AIへの依頼例: 「watchesからwatch_price_updated通知をINSERT ... SELECTで一括作成するクエリ(入札者本人を除外)と、そのテストを書いて」\n"
+    },
+    {
+      "title": "M4-03: 代理入札(上限額までの自動入札)",
+      "milestone": "M4 取引と仕上げ",
+      "labels": [
+        "feature"
+      ],
+      "body": "## 概要\n\n上限額を登録すると、他者に抜かれるたびにシステムが「現在価格+入札単位」(上限額まで)で自動的に入札し返す代理入札を実装します。自動入札も通常の入札と同じ有効条件・同じ条件付きUPDATEを通します。\n\n## 仕様参照\n\n- docs/requirements.md の「機能要件(Should)」代理入札\n- docs/database.md の proxy_bids 定義表(UNIQUE(user_id, listing_id))\n- docs/api.md の「代理入札(Should)」エンドポイント表\n- .claude/skills/bidding-consistency/SKILL.md(自動入札も3節のUPDATEを通す)\n\n## タスク\n\n- [ ] proxy_bids のmigration\n- [ ] PUT /api/listings/:id/proxy-bid(登録・更新。出品者本人はSELF_BID_FORBIDDEN)、DELETE\n- [ ] 入札成立後のフック: 抜かれたユーザーにproxy_bidがあれば、min(current_price+bid_increment, max_amount)で自動入札(通常の入札処理を再利用)\n- [ ] 連鎖の処理: 自動入札が別のproxy_bidを抜いた場合の再連鎖(ループ上限や打ち切り条件をPRに明記)\n- [ ] 上限到達したproxy_bidは以後発火しない\n\n## 受入条件\n\n- [ ] proxy(上限5000)登録中に3100の入札が来ると、自動で3200が入札されoutbid通知・price_updated配信も通常どおり動くテストがある\n- [ ] proxy同士の登録(上限5000 vs 上限4000)で、高い方が4100前後で勝つ(連鎖の結果が決定的)テストがある\n- [ ] max_amountを超える自動入札が発生しない\n- [ ] 自動入札もbids行として記録され、不変条件(winning1件、単調増加)が保たれる\n\n## ヒント\n\n- 自動入札に「特別な入札経路」を作らないこと。通常のPOST /bidsと同じサービス関数を呼べば、整合性はM2-01の保証がそのまま効きます。連鎖は「価格が動かなくなるまでループ(上限付き)」が素直です。\n- AIへの依頼例: 「入札成立後にproxy_bidsを評価して連鎖入札するリゾルバを書いて。proxy同士の対決テスト(期待する最終価格を明記)も書いて」\n"
+    },
+    {
+      "title": "M4-04: CI(GitHub Actionsでテストとビルド)",
+      "milestone": "M4 取引と仕上げ",
+      "labels": [
+        "chore"
+      ],
+      "body": "## 概要\n\nGitHub Actionsで、PRごとにテストとビルドが自動実行されるようにします。競合テスト(並列100入札)もCIで回します。\n\n## 仕様参照\n\n- docs/development-flow.md の「Definition of Done」「競合テストの回し方」\n\n## タスク\n\n- [ ] .github/workflows/ci.yml を作成(push/pull_requestで起動)\n- [ ] servicesでPostgreSQL 16を起動(WebSocketテストに追加サービスは不要)\n- [ ] lint(あれば)→ テスト(競合テスト含む)→ ビルドの順に実行\n- [ ] READMEにCIバッジを追加\n\n## 受入条件\n\n- [ ] PRを作るとCIが走り、全テスト(並列100入札・締切競合テスト含む)が通る\n- [ ] テストを意図的に壊したブランチでCIが失敗する(確認後revert)\n- [ ] CIの所要時間が10分以内(超える場合は分割や並列化を検討した記録がある)\n- [ ] 競合テストがCI上で不安定な場合、retryでごまかさず原因を直した記録がある\n\n## ヒント\n\n- CIのDBはコネクション数が小さいことがあります。並列100入札テストのプールサイズ設定(>=20)をCI環境変数でも確認しましょう。\n- AIへの依頼例: 「(スタック)のテストをGitHub Actionsで動かすworkflowを書いて。PostgreSQL 16をservicesで起動し、migrationを流してからテストして」\n"
+    },
+    {
+      "title": "M4-05: READMEとデモ仕上げ",
+      "milestone": "M4 取引と仕上げ",
+      "labels": [
+        "docs"
+      ],
+      "body": "## 概要\n\n仕上げのissueです。READMEを自分の実装に合わせて書き直し、リアルタイム入札のデモ(GIFまたは動画)と、競合テストの結果を成果物として整えます。\n\n## 仕様参照\n\n- docs/development-flow.md の「WebSocketの手動確認」\n- docs/screens.md の S-03(デモの主役)\n\n## タスク\n\n- [ ] README更新: 使用スタック、セットアップ手順(clone→compose up→migration→seed→起動)、主要機能一覧\n- [ ] ブラウザ2つの入札攻防デモ(GIF/動画): 入札→即時反映→outbidトースト→自動延長→締切→落札表示\n- [ ] 競合テストの結果(並列100入札のassert内容と実行ログ)をREADMEまたはdocsに記載\n- [ ] 全ユースケース(UC-1〜UC-3)をseedデータで通しで再現できる手順を記載\n\n## 受入条件\n\n- [ ] 初見の人がREADMEだけで環境構築〜2ブラウザのリアルタイム入札確認まで到達できる(セルフチェック)\n- [ ] デモGIF/動画で「リロードなしの価格更新」と「自動延長」が確認できる\n- [ ] 全テストが通った状態でmainがグリーン\n\n## ヒント\n\n- デモGIFはmacOSなら画面収録+ffmpeg、またはLICEcap等で作れます。2ウィンドウを左右に並べた1画面の収録が伝わりやすいです。\n- AIへの依頼例: 「READMEの構成(概要/デモ/スタック/セットアップ/テスト/設計ドキュメントへのリンク)を、いまのリポジトリの実装に合わせて下書きして」\n"
+    },
+    {
+      "title": "ADV-01: 全文検索(pg_trgm / tsvector)",
+      "milestone": null,
+      "labels": [
+        "advanced",
+        "feature"
+      ],
+      "body": "## 概要\n\n発展課題(任意)です。M1-05のILIKE検索をPostgreSQLの pg_trgm(日本語はこちらを推奨)または tsvector に置き換え、インデックスが効いていることを実行計画(EXPLAIN)で確認します。\n\n## 仕様参照\n\n- docs/requirements.md の「機能要件(Could / 発展)」\n- docs/api.md の GET /api/listings(検索APIの入出力は変えない)\n\n## タスク\n\n- [ ] pg_trgm拡張の有効化migration(CREATE EXTENSION)とGINインデックス(title、description)\n- [ ] 検索クエリをILIKE+インデックス(pg_trgmはILIKEのままでも効く)または類似度検索に変更\n- [ ] seedで数千件の出品を生成し、EXPLAIN ANALYZEでSeq ScanがIndex Scan(Bitmap)に変わることを確認\n- [ ] 変更前後の実行時間をPRに記載\n- [ ] docs/database.md のインデックス方針に追記\n\n## 受入条件\n\n- [ ] 既存の検索APIテストがそのまま通る(インターフェース不変)\n- [ ] EXPLAINの結果(前後比較)がPRに貼られている\n- [ ] 日本語の部分一致(例: 「モニター」で「27インチモニター」がヒット)が機能するテストがある\n\n## ヒント\n\n- 日本語はtsvectorの標準辞書では分かち書きできないため、pg_trgmの方が導入が簡単です。tsvectorに挑む場合はその判断理由をPRに書きましょう。\n- AIへの依頼例: 「pg_trgmのGINインデックスを張ったILIKE検索で、EXPLAIN ANALYZEの読み方(Bitmap Index Scanの確認ポイント)を教えて」\n"
+    },
+    {
+      "title": "ADV-02: 画像基盤のS3 + presigned URL化(Terraform)",
+      "milestone": null,
+      "labels": [
+        "advanced",
+        "chore"
+      ],
+      "body": "## 概要\n\n発展課題(任意)です。出品画像の保存先をローカルディスクからS3 + presigned URL方式(SNSカリキュラムのアバターアップロードと同方式)に置き換え、バケットとIAMをTerraformで定義します。AWSへのapplyは任意です。\n\n## 仕様参照\n\n- docs/requirements.md の「機能要件(Could / 発展)」\n- docs/infra.md の「コスト注意」\n- SNSカリキュラムのTerraform教材(S3 + presigned URL + CORS)と同方式\n\n## タスク\n\n- [ ] terraform/ ディレクトリにS3バケット(パブリック読み取り、presigned PUT用CORS)とIAMユーザー+最小権限ポリシーを定義\n- [ ] 画像アップロードを「POST /api/listings/:id/images でpresigned URLを発行→クライアントが直接PUT→完了通知」の2段階に変更(APIの形の変更はdocsへの追記もセットで)\n- [ ] ローカル保存とS3保存をストレージ抽象(interface)で切り替え可能にし、環境変数で選択\n- [ ] applyした場合: 動作確認後に必ずterraform destroy\n\n## 受入条件\n\n- [ ] `terraform init && terraform validate && terraform plan` がエラーなく通る(applyしない場合はplanのdry-run方法をPRに明記)\n- [ ] ローカルストレージ実装のまま既存テストが通る(抽象化のリグレッションなし)\n- [ ] presigned URL発行APIのテスト(形式検証・4枚上限がS3版でも効く)がある\n- [ ] applyした場合、destroyの実行ログがPRに貼られている\n\n## ヒント\n\n- presigned URL方式ではファイルサイズ・MIMEの検証がサーバーを経由しません。presigned POSTのcondition、またはアップロード完了通知時のHEADリクエスト検証など、どこで守るかを決めてPRに書きましょう。\n- AIへの依頼例: 「ローカル保存とS3保存を切り替えるストレージinterfaceを設計して。presigned URL発行部分はSNSカリキュラムのアバター実装と同方式で」\n"
+    }
+  ]
+}
