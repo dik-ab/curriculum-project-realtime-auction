@@ -23,16 +23,29 @@ Lumina社は社員150人に成長しました。社内Slackには「引っ越す
 
 ## 使い方
 
-1. このリポジトリ右上の **Use this template** から自分のリポジトリを作成します(Public推奨)。
-2. 自分のリポジトリをcloneし、`gh auth login` を済ませたうえで issue複製スクリプトを実行します。
+issue複製スクリプトは `gh` CLIと `jq` を前提にしています。未導入の場合、macOSは `brew install gh jq`、Windowsは `winget install GitHub.cli jqlang.jq`(またはWSLで `sudo apt install gh jq`)で入ります。初回は `gh auth login`(GitHub.com / HTTPS / ブラウザ認証でOK)を済ませてください。
+
+1. **テンプレートから自分のリポジトリを作る**
+   このリポジトリ右上の「**Use this template**」→「Create a new repository」で、自分のアカウントにリポジトリを作ります(リポジトリ名は自由です。例: `lumina-market`)。Publicにするとポートフォリオとして見せられます。
+2. **cloneする**
+
+   ```bash
+   git clone https://github.com/<your-account>/<your-repo>.git
+   cd <your-repo>
+   gh auth login          # 未認証の場合
+   ```
+
+3. **Claude Codeを起動してオンボーディングする**
+   リポジトリ直下で `claude` を起動し、`project-onboarding` スキルを使います。プロジェクトの前提とdocsの読み順をここで押さえます。
+4. **issueを複製する**
+   `setup-github-project` スキルの手順に従うか、`scripts/setup_issues.sh` を直接実行すると、ラベル・マイルストーン(M1〜M4)・22件のissueが自分のリポジトリに複製されます。スクリプトは冪等なので、途中で失敗しても再実行できます。
 
    ```bash
    ./scripts/setup_issues.sh <your-account>/<your-repo>
    ```
 
-   ラベル・マイルストーン(M1〜M4)・22件のissueが複製されます。スクリプトは冪等なので、途中で失敗しても再実行できます。
-3. `docs/` の仕様書を読み(順番は `CLAUDE.md` 参照)、**M1-01から順に** 1 issue = 1 branch = 1 PR で実装を進めます。
-4. 言語・フレームワークは自由です(カリキュラムで学んだ NestJS / Spring Boot / FastAPI / Laravel / Gin / Rails + React を推奨)。仕様はスタック非依存で書かれています。WebSocketライブラリ(Socket.IO、gorilla/websocket、Action Cable等)も自由です。
+5. **docsを読み、M1-01から順に進める**
+   `docs/` の仕様書を読み(順番は `CLAUDE.md` 参照)、**M1-01から順に** 1 issue = 1 branch = 1 PR で実装を進めます。言語・フレームワークは自由です(カリキュラムで学んだ NestJS / Spring Boot / FastAPI / Laravel / Gin / Rails + React を推奨)。仕様はスタック非依存で書かれています。WebSocketライブラリ(Socket.IO、gorilla/websocket、Action Cable等)も自由です。
 
 ## AWSアカウントは不要です
 

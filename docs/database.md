@@ -12,6 +12,9 @@ erDiagram
     users ||--o{ notifications : "receives"
     users ||--o{ trade_comments : "writes"
     users ||--o{ proxy_bids : "registers"
+    users ||--o{ trades : "buys"
+    users ||--o{ trades : "sells"
+    users |o--o{ listings : "currently_wins"
     categories ||--o{ listings : "classifies"
     listings ||--o{ listing_images : "has"
     listings ||--o{ bids : "receives"
@@ -283,7 +286,7 @@ stateDiagram-v2
     active --> cancelled : 出品者取消(入札0件のときのみ)
     active --> suspended : admin停止(suspended_reason記録)
     suspended --> active : admin解除(ends_atが過ぎていれば解除せず終了処理へ)
-    suspended --> cancelled : 出品者取消 / admin判断
+    suspended --> cancelled : 出品者取消(入札0件のときのみ)
     active --> sold : 落札(締切時に入札あり or 即決)
     active --> ended : 流札(締切時に入札なし)
     sold --> [*]

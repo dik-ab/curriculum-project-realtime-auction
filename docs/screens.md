@@ -10,7 +10,7 @@
 | S-02 | 出品一覧(トップ) | member / admin | 検索(キーワード・カテゴリ)、ソート(新着 / 終了間近 / 人気)、ページネーション。カードに現在価格・入札数・残り時間 |
 | S-03 | 出品詳細 | member / admin | **リアルタイム画面(本プロジェクトの主役)**。構成は後述 |
 | S-04 | 出品フォーム(作成・編集) | member / admin | タイトル、説明、カテゴリ、画像(最大4枚)、開始価格、入札単位、即決価格(任意)、終了日時。下書き保存と公開 |
-| S-05 | マイページ | member / admin | タブ: 出品中 / 出品履歴 / 入札中(勝ち負けバッジ) / 落札・取引。通知一覧(未読バッジ) |
+| S-05 | マイページ | member / admin | タブ: 出品中 / 出品履歴 / 入札中(勝ち負けバッジ) / ウォッチ一覧 / 落札・取引。通知一覧(未読バッジ) |
 | S-06 | 取引画面 | 当事者のみ | 取引ステータス(initiated / handover / completed)の表示と遷移ボタン、コメント欄(受け渡し相談) |
 | S-07 | カテゴリ管理 | admin | カテゴリのCRUDと並び順 |
 | S-08 | 出品管理(admin) | admin | 全出品の一覧と停止 / 停止解除(理由の入力) |
@@ -76,11 +76,12 @@ sequenceDiagram
 
     A->>DB: 条件付きUPDATE(田中)→ 1行更新 ✅
     Note over DB: current_price: 3000 → 3100<br/>田中のリクエストが先に行ロックを取得
-    A->>DB: 条件付きUPDATE(佐藤)→ 0行更新 ❌
-    Note over DB: 3100 >= 3100 + 100 は偽<br/>(田中の更新後の値で評価される)
-
+    A->>DB: 条件付きUPDATE(佐藤)→ 行ロック待ちでブロック ⏳
     A->>DB: bids INSERT(田中, 3100, winning)<br/>旧winningをoutbidに更新(同一トランザクション)
+    A->>DB: COMMIT(田中)
     A-->>T: 201 {bid: {...}, listing: {current_price: 3100}}
+    Note over DB: 田中のCOMMITで佐藤のUPDATEのブロックが解け、<br/>更新後の値で条件を再評価<br/>3100 >= 3100 + 100 は偽 → 0行更新 ❌
+    DB-->>A: 佐藤のUPDATE → 0行更新 ❌
     A-->>S: 422 {"message":"入札額が不足しています(最低3,200円)",<br/>"code":"BID_TOO_LOW","minimum_amount":3200}
 
     A->>WS: price_updated {current_price: 3100, bid: {bidder_name: "田中"}}
